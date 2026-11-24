@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ADOS User Manual</title>
+<!-- Source of "ADOS User Manual.pdf".  To rebuild the PDF (Chrome or Edge):
+     chrome --headless --no-pdf-header-footer --print-to-pdf="ADOS User Manual.pdf" "ADOS User Manual.html" -->
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 18mm 20mm 18mm;
+    @bottom-left { content: "ADOS User Manual"; font: 8.5pt Arial, sans-serif; color: #777; }
+    @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8.5pt Arial, sans-serif; color: #777; }
+  }
+  body { font: 10.5pt/1.45 Arial, Helvetica, sans-serif; color: #1a1a1a; margin: 0; }
+  h1 { font-size: 24pt; margin: 0 0 2pt; }
+  .byline { color: #666; margin-bottom: 18pt; }
+  h2 { font-size: 15pt; margin: 22pt 0 6pt; border-bottom: 1px solid #ccc; padding-bottom: 2pt; break-after: avoid; }
+  h2.page { break-before: page; }
+  h3 { font-size: 12pt; margin: 14pt 0 4pt; break-after: avoid; }
+  p { margin: 0 0 7pt; }
+  ul, ol { margin: 0 0 7pt; padding-left: 20pt; }
+  li { margin-bottom: 2pt; }
+  code { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; background: #f2f2f2; padding: 0 2pt; border-radius: 2px; }
+  pre { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; background: #f5f5f5; border: 1px solid #e2e2e2; padding: 6pt 8pt; margin: 0 0 8pt; white-space: pre-wrap; break-inside: avoid; }
+  pre.screen { background: #111; color: #eee; border-color: #111; }
+  pre.screen .r { color: #ff6b6b; }
+  table { border-collapse: collapse; width: 100%; margin: 0 0 9pt; font-size: 9.5pt; break-inside: auto; }
+  tr { break-inside: avoid; }
+  th, td { border: 1px solid #ccc; padding: 3pt 5pt; text-align: left; vertical-align: top; }
+  th { background: #eee; }
+  .note { border-left: 3px solid #999; padding-left: 8pt; color: #333; }
+  .syntax { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; margin: 0 0 6pt; }
+</style>
+</head>
+<body>
+
+<h1>ADOS User Manual</h1>
+<div class="byline">Version 1.1 &middot; 22 November 2026 &middot; Adrian Brown</div>
+
+<h2>1. Introduction</h2>
+<p>ADOS is one DOS for the SAM Coup&eacute;. It replaces SAMDOS, BDOS (Trinity) and AL-BDOS (Atom Lite), reads and writes MasterDOS disks, and adds PC FAT16 and FAT32 cards and drives. You load it once and every drive you own is available under its own letter.</p>
+<p>ADOS fits in one 16K DOS page. Its start-up code is thrown away after boot and the memory is reused for buffers, so ADOS uses no more memory than SAMDOS.</p>
+
+<h3>What ADOS gives you</h3>
+<ul>
+  <li><b>One DOS for all your storage:</b> floppy drives, the Atom Classic and Atom Lite IDE interfaces, and the Trinity SD card interface.</li>
+  <li><b>Drive letters:</b> each disk, BDOS record container or FAT partition is a drive with a letter, such as <code>A:</code> or <code>D:</code>.</li>
+  <li><b>SAMDOS and MasterDOS compatibility:</b> disks made by SAMDOS, MasterDOS, BDOS and AL-BDOS work as they are. The error numbers match SAMDOS, so programs that trap DOS errors still work.</li>
+  <li><b>MasterDOS directories:</b> subdirectories, paths in file names and date stamps on SAM disks.</li>
+  <li><b>BDOS records:</b> a BDOS card or hard drive holds many 800K records, each of which behaves like a floppy disk.</li>
+  <li><b>PC cards and drives:</b> a card or drive formatted on a PC as FAT16 or FAT32 is one large drive, with long file names and folders. ADOS reads and writes it, and a PC can read the files ADOS saves.</li>
+  <li><b>COPY between any drives:</b> single files, wildcards, and whole disks, with a percentage shown as it goes.</li>
+  <li><b>SAM disk images on FAT:</b> an 800K <code>.MGT</code> file can be used as a folder or mounted on a drive letter, and works like a real floppy.</li>
+  <li><b>Real-time clocks:</b> files you save are stamped with the date and time when a clock is fitted, on SAM disks and FAT drives.</li>
+</ul>
+
+<h3>Supported hardware</h3>
+<table>
+  <tr><th>Device</th><th>Notes</th><th>Letter</th></tr>
+  <tr><td>Floppy drive 1 and 2</td><td>Internal drives, 800K SAM format</td><td>A: and B:</td></tr>
+  <tr><td>Atom Lite (left and right bays, master and slave)</td><td>CompactFlash cards</td><td rowspan="3">C: onwards, in the order they are found</td></tr>
+  <tr><td>Atom Classic (master and slave)</td><td>IDE hard drive or CompactFlash</td></tr>
+  <tr><td>Trinity</td><td>SD card</td></tr>
+  <tr><td>Dallas, SAMBUS or Atom Lite clock</td><td>Date and time stamps</td><td>&mdash;</td></tr>
+</table>
+
+<h3>What's new</h3>
+<table>
+  <tr><th>Version</th><th>Changes</th></tr>
+  <tr><td>1.1</td><td>First release. For machine code, as well as everything above: streams (hooks 158, 159, 161 and 192&ndash;194) and a direct entry (<code>CALL &amp;8209</code>) for programs that have taken the machine over. BDOS programs work as under BDOS: the DVARs are laid out as in BDOS (their address is at offset 0 of the DOS page), <code>D2:</code> is the BDOS card, and BDOS&rsquo;s record and sector hooks (134, 149, 156, 157, 160, 162 and 163) are there. With more than one BDOS card, drive 2 is the one used last. Hook 139 (<code>DVAR</code>) gives the DVARs: the version is in DVAR 7, DVAR 0 sets the border flash on disk access, and DVAR 48 gives hook errors back to the program. Hook 195 gives a long name (up to 255 characters, with a drive and path) for the next hook that reads a header, so machine code can load, save, open, list and erase files with long names too, through <code>RST 8</code> or the direct entry (Appendix A).</td></tr>
+</table>
+
+<h3>About this manual</h3>
+<p>This manual describes ADOS version 1.1 as it stands on 22 November 2026. Features still to come are collected in Appendix C. Section 5 is the reference for every command; the other sections explain how to use them.</p>
+<p>You should already know SAM BASIC. Where ADOS works the same as SAMDOS (for example <code>SAVE</code> and <code>LOAD</code>), this manual describes only what is different.</p>
+
+<h2 class="page">2. Getting started</h2>
+<p>To start ADOS, put the ADOS system disk in drive 1 and press F9, or type <code>BOOT</code> and press RETURN. ADOS checks your hardware, shows what it found, and selects a drive. You can then use BASIC as normal.</p>
+
+<h3>The start-up screen</h3>
+<p>While it starts, ADOS looks for every clock and storage interface it knows about. The screen then shows something like this:</p>
+<pre class="screen">     -= A-DOS Version 1.1 (c) 2026 by Adrian Brown =-
+
+Internal Memory: <span class="r">512K</span>
+External Memory: <span class="r">None Present</span>
+Clock: <span class="r">AL Clock Present</span>  Date: <span class="r">20 Nov 2026 14:37:19</span>
+Detected: <span class="r">Atom Lite (Right) - Master</span> Size: <span class="r">159MB</span> Scheme: <span class="r">MBR</span>
+  <span class="r">C:</span> FAT16 <span class="r">20MB</span> 'GAMES      '
+  <span class="r">D:</span> FAT32 <span class="r">68MB</span> 'WORK       '
+Detected: <span class="r">Atom Lite (Right) - Slave</span> Size: <span class="r">1950MB</span> Scheme: <span class="r">VBR</span>
+  <span class="r">E:</span> FAT32 <span class="r">1950MB</span> 'NO NAME    '
+Detected: <span class="r">Floppy Drive 1</span> Size: <span class="r">800K</span> Scheme: <span class="r">SAMDOS</span>
+  <span class="r">A:</span> SAM Disk <span class="r">800K</span>
+
+Current Drive: <span class="r">A:</span></pre>
+<p>The sizes, labels and devices depend on your hardware.</p>
+<ul>
+  <li><b>Clock</b> shows the clock found, if any, and the date and time it gives (<code>Not Set</code> if the clock has no sensible date). See Section 8.</li>
+  <li><b>Detected</b> lines list each interface that answered, its size and the scheme: how the medium is laid out (see Section 3).</li>
+  <li>The <b>indented lines</b> under a device list the drives found on it, with the letter each one was given and, for FAT, the volume label.</li>
+  <li><b>Current Drive</b> is the drive used when a command does not name one. ADOS chooses the default drive (normally <code>A:</code>). If that drive is missing, it chooses the first letter that has a drive.</li>
+</ul>
+
+<h3>Your first commands</h3>
+<ol>
+  <li>Type <code>DIR</code> to list the files on the current drive.</li>
+  <li>Type <code>DIR "C:"</code> to list the files on drive C: without changing the current drive.</li>
+  <li>Type <code>DIR = "C:"</code> to make C: the current drive.</li>
+  <li>Type <code>LOAD "GAME"</code> to load a file from the current drive, or <code>LOAD "A:GAME"</code> to load it from drive A:.</li>
+  <li>Type <code>SAVE "TEST"</code> to save the BASIC program in memory on the current drive.</li>
+  <li>Type <code>COPY "A:*" TO "C:\BACKUP\"</code> to copy every file on the floppy to a folder on the card.</li>
+</ol>
+
+<h3>Taking care of disks and cards</h3>
+<ul>
+  <li>Do not remove a floppy disk, card or drive while it is being read or written. By default the border flashes while ADOS reads or writes (see Appendix B to turn this off).</li>
+  <li>ADOS finds cards and drives when it starts. If you fit a card or drive after booting, reset and boot ADOS again so that it is found.</li>
+  <li>A floppy disk, card, BDOS record or disk image can be write protected. ADOS then reports <code>Protected</code> when you try to change it.</li>
+</ul>
+
+<h2 class="page">3. Drives, records and partitions</h2>
+<p>Every drive in ADOS has a letter, and each letter is one SAM disk, one BDOS record container or one FAT partition. A single card can therefore give you several letters, and you never need to know which interface a file is on, only its letter.</p>
+
+<h3>Schemes: how a medium is laid out</h3>
+<p>When ADOS starts it reads the start of each disk, card or drive to find out how it is laid out. The start-up screen calls this the scheme.</p>
+<table>
+  <tr><th>Scheme</th><th>What it is</th><th>Drives it gives</th></tr>
+  <tr><td>SAMDOS</td><td>An 800K SAM floppy disk made by SAMDOS, MasterDOS or ADOS</td><td>One SAM drive</td></tr>
+  <tr><td>BDOS</td><td>A card or hard drive prepared by BDOS or AL-BDOS, holding many 800K records</td><td>One drive; use <code>RECORD</code> to choose the record</td></tr>
+  <tr><td>MBR</td><td>A PC card or drive with a partition table</td><td>One drive per FAT partition</td></tr>
+  <tr><td>VBR</td><td>A PC card formatted as a single volume with no partition table</td><td>One FAT drive</td></tr>
+  <tr><td>GPT</td><td>A modern PC partition table</td><td>None (not supported)</td></tr>
+  <tr><td>Unknown</td><td>Anything else</td><td>None</td></tr>
+</table>
+<p>A card or drive holds either BDOS records or PC partitions, never both.</p>
+
+<h3>How letters are given out</h3>
+<ul>
+  <li><b>A: and B:</b> always belong to floppy drives 1 and 2. <code>D1:</code> also means A:. <code>D2:</code> means the BDOS card in use, as in BDOS, or B: if there is no BDOS card. A floppy drive that is fitted keeps its letter even with no disk in it, and B: stays free for a disk image when there is no second drive.</li>
+  <li><b>C: onwards</b> go to every other drive and partition, in the order they are found: Atom Lite right bay (master, then slave), Atom Lite left bay, Atom Classic master, Atom Classic slave, Trinity. Each FAT partition, and each set of BDOS records, takes the next letter.</li>
+  <li><b>Up to 8 letters</b> can be in use at once, counting mounted disk images.</li>
+</ul>
+<p>For example, an Atom Classic with two partitions and an SD card as slave gives C: and D: on the hard disk and E: on the card. The letters can change from one boot to the next if you add or remove cards; check the start-up screen, or use <code>DIR "X:"</code> to see what a letter holds.</p>
+<p>The letters are always given out this way. Only the drive chosen at boot is stored in the DOS itself (DVAR 47, Appendix B), so it can be changed with <code>POKE</code> and saved with it.</p>
+
+<h3>SAM drives</h3>
+<p>A SAM drive is an 800K disk: a real floppy, one record on a BDOS card, or a disk image on a FAT drive. SAM drives support everything in this manual, including subdirectories and date stamps.</p>
+<p>The directory of a SAM disk normally holds 80 entries. Disks made by MasterDOS with larger directories (up to 780 entries) are read and written correctly.</p>
+
+<h3>BDOS records</h3>
+<p>BDOS and AL-BDOS divide a card or hard drive into records. Each record is an 800K SAM disk and can have a 16-character name. A 2G card holds about 1,200 records.</p>
+<p>A BDOS drive always has one record selected, and every command on that drive uses it. Record 1 is selected when ADOS starts.</p>
+<ul>
+  <li><code>RECORD</code> lists the records that have names.</li>
+  <li><code>RECORD 25</code> selects record 25.</li>
+  <li><code>RECORD "GAMES"</code> selects the record named GAMES.</li>
+</ul>
+<p>Selecting a record also returns you to its root directory. ADOS reads cards made by both BDOS and AL-BDOS, and the records stay usable by those DOSes.</p>
+<p><b>BDOS programs</b> keep working. ADOS has BDOS&rsquo;s DOS variables and hook codes, and <code>D2:</code> is the BDOS card. <code>PEEK DVAR 25</code> gives its current record, and <code>POKE DVAR 25,n</code> selects record n, as in BDOS. BDOS had one card; with a card in the Atom and another in the Trinity, ADOS&rsquo;s drive 2 and DVARs follow the BDOS card you used last, starting with the first one found. Each card keeps its own record.</p>
+
+<h3>FAT drives</h3>
+<p>A FAT drive is a partition on a card or drive formatted on a PC as FAT16 or FAT32. It is one large drive with folders and long file names, and it is a simple way to move files between a PC and the SAM. ADOS reads and writes FAT drives: <code>SAVE</code>, <code>ERASE</code>, <code>RENAME</code>, <code>OPEN DIR</code>, <code>ERASE DIR</code> and <code>COPY</code> all work on them.</p>
+<p>A FAT drive can also hold SAM disk images (Section 6). FAT12, used on very small cards, is shown at start-up but its files cannot be read.</p>
+
+<h2 class="page">4. File names, directories and paths</h2>
+<p>A full file name in ADOS is a drive, then a path, then a name: <code>"D:\GAMES\ARCADE\INVADERS"</code>. Every part is optional; whatever you leave out comes from the current drive and the current directory.</p>
+
+<h3>Drive letters in names</h3>
+<p>Put the drive letter and a colon in front of a name to use a drive other than the current one:</p>
+<pre>LOAD "B:MYPROG"
+SAVE "C:SCORES" CODE 32768,1000
+DIR "D:"</pre>
+<p>Upper and lower case letters are treated the same. If the letter has no drive, ADOS reports <code>No drive</code>.</p>
+
+<h3>Names</h3>
+<ul>
+  <li><b>SAM drives</b> use names of up to 10 characters, as SAMDOS and MasterDOS do. Case is ignored when ADOS looks for a file.</li>
+  <li><b>FAT drives</b> take long names of up to 64 characters, such as <code>"Manic Miner.bin"</code> (a longer name is cut to its first 64; a file made on a PC with a longer name can still be reached with a wildcard or its 8.3 name). Case is ignored, and a file can be found by its long name or its short 8.3 name (<code>MANICM~1.BIN</code>). A name cannot start with <code>.</code> or contain <code>" * / : &lt; &gt; ? \ |</code>.</li>
+  <li><b>The whole name</b>, drive and path included, can be up to 255 characters, in ADOS's commands and in <code>LOAD</code>, <code>SAVE</code>, <code>VERIFY</code> and <code>MERGE</code>: <code>SAVE "D:\PICS\HOLIDAY SNAPS.SCR" SCREEN$</code>. The SAM ROM on its own refuses a <code>LOAD</code> or <code>SAVE</code> name over 14 characters. ADOS takes the longer ones on ROM 3.0; with an older ROM the limit stays at 14. Tape names stay at 10.</li>
+</ul>
+
+<h3>Wildcards</h3>
+<table>
+  <tr><th>Wildcard</th><th>Matches</th><th>Example</th><th>Finds</th></tr>
+  <tr><td><code>?</code></td><td>Any one character</td><td><code>DIR "LEVEL?"</code></td><td>LEVEL1, LEVEL2, LEVELA</td></tr>
+  <tr><td><code>*</code></td><td>Any characters to the end of the name</td><td><code>DIR "GAME*"</code></td><td>GAME, GAMES, GAMEOVER</td></tr>
+</table>
+<p><code>DIR</code>, <code>ERASE</code> and <code>COPY</code> accept wildcards. <code>SAVE</code>, <code>RENAME</code>, <code>OPEN DIR</code> and <code>FORMAT</code> need a plain name and report <code>Bad file name</code> if it has wildcards.</p>
+
+<h3>Directories</h3>
+<p>SAM drives hold subdirectories in the same way as MasterDOS, and FAT drives have folders. Each drive remembers its own current directory, so changing directory on D: does not affect A:.</p>
+<table>
+  <tr><th>In a path</th><th>Means</th></tr>
+  <tr><td><code>\</code> or <code>/</code> at the start</td><td>Start from the root directory</td></tr>
+  <tr><td><code>\</code> or <code>/</code> between names</td><td>Go down into the directory named before it</td></tr>
+  <tr><td><code>..</code> or <code>^</code></td><td>Go up to the parent directory</td></tr>
+  <tr><td><code>GAMES.MGT</code></td><td>A disk image on a FAT drive is a folder you can go into (Section 6)</td></tr>
+</table>
+<pre>DIR = "GAMES"            : REM into GAMES, below the current directory
+DIR = "\"                : REM back to the root
+DIR = ".."               : REM up one level
+DIR = "D:\WORK\SAM"      : REM D: becomes current, in \WORK\SAM
+LOAD "\GAMES\INVADERS"   : REM a file in GAMES, from anywhere
+LOAD "..\TOOLS\ASM"      : REM up one level, then into TOOLS</pre>
+<p>If a directory in a path does not exist, ADOS reports <code>Dir not found</code>. Directories on SAM drives use the MasterDOS layout, so MasterDOS can read them. SAMDOS and BDOS ignore the directory information and show every file on the disk.</p>
+
+<h3>SAM files on FAT drives</h3>
+<p>A file saved to a FAT drive holds only its data, so a PC can read it as it is. The SAM details (type, name, load and run addresses) go in a hidden file beside it with <code>.info</code> added to the name: <code>GAME.BIN</code> gets <code>GAME.BIN.info</code>. ADOS keeps the two together: <code>ERASE</code> removes both, <code>RENAME</code> renames both, and <code>DIR</code> does not list <code>.info</code> files.</p>
+<p>A file with no <code>.info</code>, such as one copied from a PC, loads as CODE. If you do not give an address it loads at 32768. The length always comes from the file's size on the card.</p>
+<pre>LOAD "music.bin" CODE            : REM loads at 32768
+LOAD "music.bin" CODE 40000      : REM loads at 40000</pre>
+
+<h2 class="page">5. Command reference</h2>
+<p>ADOS adds the commands below to SAM BASIC, and makes <code>LOAD</code>, <code>SAVE</code>, <code>VERIFY</code> and <code>MERGE</code> work on every drive. All of them can be used in a program as well as typed directly. In the syntax lines, <i>name</i> is any string expression, and a part in [square brackets] can be left out.</p>
+<table>
+  <tr><th>Command</th><th>What it does</th><th>SAM drive</th><th>FAT drive</th></tr>
+  <tr><td><code>LOAD</code> / <code>MERGE</code></td><td>Load a file</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td><code>VERIFY</code></td><td>Compare a file with memory</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td><code>SAVE</code></td><td>Save a file</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td><code>DIR</code></td><td>List files</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td><code>DIR n</code></td><td>List drive 1 (A:) or 2 (D2:)</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td><code>DIR ?</code></td><td>List files in every directory</td><td>Yes</td><td>Current folder only</td></tr>
+  <tr><td><code>DIR =</code></td><td>Change drive and directory</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td><code>PATH$</code></td><td>The current drive and path</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td><code>ERASE</code></td><td>Erase files</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td><code>RENAME</code></td><td>Rename a file or directory</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td><code>OPEN DIR</code> / <code>ERASE DIR</code></td><td>Make or erase a directory</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td><code>COPY</code></td><td>Copy files or whole disks</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td><code>FORMAT</code></td><td>Make a blank disk image</td><td>&mdash;</td><td>Yes</td></tr>
+  <tr><td><code>OPEN "X:" TO</code> / <code>CLOSE "X:"</code></td><td>Mount or unmount a disk image</td><td>&mdash;</td><td>Yes</td></tr>
+  <tr><td><code>RECORD</code></td><td>List or select BDOS records</td><td>BDOS drives</td><td>Disk images</td></tr>
+  <tr><td><code>BOOT</code>, F9</td><td>Load and run the AUTO file</td><td>Yes</td><td>Yes</td></tr>
+</table>
+
+<h3>LOAD, MERGE, VERIFY</h3>
+<div class="syntax">LOAD name [CODE [address]] | [SCREEN$] | [DATA ...]<br>MERGE name<br>VERIFY name ...</div>
+<p>These work as in SAMDOS, and accept a drive and path in the name. A BASIC program saved with <code>LINE</code> runs after loading. On a FAT drive, a file with no <code>.info</code> loads as CODE (Section 4).</p>
+<pre>LOAD "A:INTRO"
+LOAD "\GAMES\INVADERS"
+LOAD "D:music.bin" CODE 40000
+VERIFY "SCREEN" SCREEN$</pre>
+
+<h3>SAVE</h3>
+<div class="syntax">SAVE name [LINE n] | [CODE start,length[,run]] | [SCREEN$] | [DATA ...]</div>
+<p><code>SAVE</code> works as in SAMDOS. The file goes in the current directory of the drive, unless the name includes a path. A file with the same name is replaced. A protected (SAM) or read-only (FAT) file is not replaced, and ADOS reports <code>File name used</code>; so does saving over a folder's name, or over a disk image that is in use.</p>
+<p>With a clock fitted, the file is stamped with the date and time. On a SAM drive the stamp goes where MasterDOS keeps it; on a FAT drive it is the file&rsquo;s date, the one a PC shows. Without a clock, FAT files are dated 1 January 1980.</p>
+<pre>SAVE "MYPROG" LINE 10
+SAVE "B:SCREEN" SCREEN$
+SAVE "D:\WORK\DATA.BIN" CODE 32768,4096</pre>
+
+<h3>DIR</h3>
+<div class="syntax">DIR<br>DIR name<br>DIR n<br>DIR ?</div>
+<p><code>DIR</code> lists the files in the current directory of the current drive. With a name, it lists a different drive, or only the files that match the name or a wildcard. To list what is in a directory or a disk image, end the name with <code>\</code>: <code>DIR "D:\GAMES"</code> lists just the GAMES entry, <code>DIR "D:\GAMES\"</code> lists the files in it. <code>DIR ?</code> lists every file on a SAM drive, whatever directory it is in; on a FAT drive it lists the current folder.</p>
+<p><code>DIR n</code> lists a drive by number, as in SAMDOS and MasterDOS: <code>DIR 1</code> is A:, and <code>DIR 2</code> is the BDOS card in use, or B: if there is none. <code>DIR 0</code> is the current drive; any other number gives <code>No drive</code>.</p>
+<pre>DIR "A:"
+DIR 1
+DIR "D:\GAMES\"
+DIR "D:\GAMES\CHAOS.MGT\"
+DIR "A:TEST*"</pre>
+<p>On a SAM drive each line shows the entry number, the name, the size in sectors and the type, then the number of files and the space left. On a BDOS drive the heading also shows the record. As in MasterDOS, a CODE file is shown as <code>C</code> with its start address and length, and a BASIC program that runs itself shows its auto-run line.</p>
+<pre>A:\
+  1 INTRO       12 BASIC 10
+  2 GAMES        1 &lt;DIR&gt;
+  3 TITLE       49 SCREEN$
+  4 MCODE       14 C 32768,6912
+ 4 files, 731K free</pre>
+<p>On a FAT drive the heading shows the full path, such as <code>D:\GAMES</code>. Each line shows the long name and its size: in bytes, in K for files of 64K and over, or <code>&lt;DIR&gt;</code> for a folder. Hidden files and <code>.info</code> files are not listed.</p>
+
+<h3>DIR =</h3>
+<div class="syntax">DIR = name</div>
+<p>Changes the current drive, the current directory, or both. See Section 4 for the path rules.</p>
+<pre>DIR = "D:"
+DIR = "GAMES"
+DIR = "C:\WORK\SAM"
+DIR = ".."
+DIR = "D:\GAMES\CHAOS.MGT"      : REM into a disk image</pre>
+
+<h3>PATH$</h3>
+<p><code>PRINT PATH$</code> gives the current drive and path, for example <code>A:\UTILS</code> or <code>D:\GAMES\SAVES</code>. Inside a disk image it gives only the path inside the image.</p>
+
+<h3>ERASE</h3>
+<div class="syntax">ERASE name</div>
+<p>Erases a file, or every file that matches a wildcard. Protected (SAM) and read-only (FAT) files are skipped, and so is a disk image that is in use. If nothing matches, ADOS reports <code>File not found</code>.</p>
+<pre>ERASE "OLDPROG"
+ERASE "B:TEMP*"
+ERASE "D:\TEMP\*"</pre>
+
+<h3>RENAME</h3>
+<div class="syntax">RENAME name TO newname<br>RENAME DIR name TO newname</div>
+<p>Gives a file or directory a new name. It stays on the same drive and in the same directory, so give only the name after <code>TO</code>. If the new name is already used, ADOS reports <code>File name used</code>. <code>RENAME DIR</code> is the same as <code>RENAME</code>, for MasterDOS users. On a FAT drive the renamed file is dated with the time of the rename.</p>
+<pre>RENAME "PROG" TO "PROG2"
+RENAME "D:\WORK\DRAFT.TXT" TO "FINAL.TXT"
+RENAME DIR "GAMES" TO "ARCADE"</pre>
+
+<h3>OPEN DIR</h3>
+<div class="syntax">OPEN DIR name</div>
+<p>Makes a new directory, in the current directory unless the name has a path. On a SAM disk this is a MasterDOS directory; on a FAT drive it is an ordinary folder a PC can use.</p>
+<pre>OPEN DIR "GAMES"
+OPEN DIR "D:\WORK\SAVES"</pre>
+
+<h3>ERASE DIR</h3>
+<div class="syntax">ERASE DIR name</div>
+<p>Erases a directory. It must be empty, or ADOS reports <code>Dir not empty</code>. On a FAT drive a hidden <code>.info</code> file still counts as something in the folder.</p>
+
+<h3>COPY</h3>
+<div class="syntax">COPY name TO name</div>
+<p>Copies files between any two drives, SAM or FAT, in either direction. If the target's name is blank or has wildcards, each file keeps its own name. Directories are not copied.</p>
+<pre>COPY "A:CHAOS" TO "D:\GAMES\CHAOS"      : REM one file, new name
+COPY "A:*" TO "D:\BACKUP\"              : REM every file, same names
+COPY "D:\PICS\*.SCR" TO "A:"            : REM matching files
+COPY "D:README.TXT" TO "D:\DOCS\"       : REM same drive, another folder</pre>
+<p>While it copies, COPY shows each file's name and how far it has got, from 0% to 100%. The figure counts every sector read and written, so on a small file it can reach 99% early and then stay there until the file is finished.</p>
+<p>As in MasterDOS, a file bigger than free memory is copied in several passes, so any file can be copied whatever its size. COPY needs at least 32K of free memory in one block; with less it reports <code>No memory</code>. The more memory is free, the fewer passes it takes.</p>
+<p>The copy keeps the file's type and addresses. The copy is dated when it is made, as if it had just been saved. A PC file copied from one FAT drive to another gains a <code>.info</code>.</p>
+<p><b>Whole disks.</b> If one side is only a drive letter and that drive is a SAM disk, COPY copies the whole disk, every track and sector, and shows a percentage as it goes. The target is overwritten completely.</p>
+<pre>COPY "A:" TO "B:"                 : REM floppy to floppy
+COPY "A:" TO "D:\BACKUP.MGT"      : REM floppy to a disk image (made if it isn't there)
+COPY "C:" TO "D:\RECORD5.MGT"     : REM the current BDOS record to a disk image
+COPY "D:\BACKUP.MGT" TO "A:"      : REM disk image to a floppy (it must be formatted)</pre>
+
+<h3>FORMAT</h3>
+<div class="syntax">FORMAT name</div>
+<p>Makes a new, empty SAM disk image (819,200 bytes) on a FAT drive. If the name is already used, ADOS reports <code>File name used</code>. FORMAT does not format real floppies; on a drive that isn't FAT it reports <code>Bad device</code>.</p>
+<pre>FORMAT "D:\WORK.MGT"</pre>
+
+<h3>OPEN "X:" TO and CLOSE "X:"</h3>
+<div class="syntax">OPEN "X:" TO name<br>CLOSE "X:"</div>
+<p><code>OPEN</code> gives a disk image its own drive letter until <code>CLOSE</code> or reset. The letter must be free, or ADOS reports <code>Bad device</code>. If the closed drive was the current drive, ADOS goes back to the default drive. <code>OPEN #</code> and <code>CLOSE #</code> (streams) are still the ROM's.</p>
+<pre>OPEN "B:" TO "D:\GAMES\CHAOS.MGT"
+LOAD "B:chaos"
+CLOSE "B:"</pre>
+
+<h3>RECORD</h3>
+<div class="syntax">RECORD<br>RECORD n<br>RECORD name</div>
+<p>Works on the current drive, which must be a BDOS drive; otherwise ADOS reports <code>Bad device</code>. <code>RECORD</code> on its own lists every record that has a name, with its number. <code>RECORD n</code> or <code>RECORD name</code> selects a record; case is ignored. If the record does not exist, ADOS reports <code>No record</code>. Select the drive first with <code>DIR =</code>:</p>
+<pre>DIR = "C:"
+RECORD
+RECORD 12
+RECORD "UTILITIES"</pre>
+<p>On a FAT drive, <code>RECORD "CHAOS.MGT"</code> does the same as <code>DIR = "CHAOS.MGT"</code>, and <code>RECORD 0</code> leaves the image (but not a mounted one: use <code>CLOSE</code>).</p>
+
+<h3>BOOT and F9</h3>
+<p>F9 loads and runs the file whose name starts with <code>AUTO</code> on the current drive, in the current directory. If there isn't one, nothing happens. <code>BOOT</code> does the same once ADOS is loaded, but reports <code>No AUTO file</code> if there isn't one. The AUTO file must be BASIC, CODE or SCREEN$; BASIC programs run from their auto-start line.</p>
+
+<h2 class="page">6. Disk images</h2>
+<p>A FAT drive can hold SAM floppy disk images. Software that needs a SAMDOS or MasterDOS disk runs from an image unchanged. There are two ways to use one:</p>
+<ul>
+  <li><b>As a folder.</b> Go into the image with a path: <code>DIR = "D:\GAMES\CHAOS.MGT"</code>. While inside it, the drive works as a SAM floppy. <code>..</code> from the image's root goes back to the FAT folder that holds it.</li>
+  <li><b>Mounted on its own letter.</b> <code>OPEN "B:" TO "D:\GAMES\CHAOS.MGT"</code> makes B: a SAM floppy until <code>CLOSE "B:"</code>. This suits software that only uses certain drives, and games on more than one disk. A mounted drive stays inside its image.</li>
+</ul>
+<p>An image can also appear in the middle of a path: <code>LOAD "D:\GAMES\CHAOS.MGT\chaos"</code>.</p>
+
+<h3>Which files are images</h3>
+<ul>
+  <li>An image is any file of exactly 819,200 bytes, whatever its extension (<code>.MGT</code>, <code>.DSK</code>, or none): the raw 800K disk in MGT order. EDSK and SAD files are not read.</li>
+  <li>An image need not be in one piece on the card, but must be in no more than 12 pieces, or ADOS reports <code>Fragmented</code>. Copy it to another drive and back, or defragment the card on a PC.</li>
+  <li>An image that is read-only on the FAT drive reports <code>Protected</code> when written to.</li>
+  <li>An image that is mounted, or that a drive is inside, cannot be erased or saved over. <code>RENAME</code> is still allowed.</li>
+</ul>
+<p>Use <code>FORMAT</code> to make a blank image, and <code>COPY</code> to copy a whole disk to or from one (Section 5).</p>
+
+<h2>7. Interfaces</h2>
+<p>ADOS finds every supported interface by itself when it starts; there is nothing to set up. This section gives the details that matter when you fit or swap hardware.</p>
+<table>
+  <tr><th>Interface</th><th>Media</th><th>Up to</th><th>Notes</th></tr>
+  <tr><td>Floppy drives</td><td>800K SAM disks</td><td>2 drives</td><td>Drive 2 cannot be used if an Atom or the Atom Lite right bay is fitted</td></tr>
+  <tr><td>Atom Classic</td><td>IDE hard drive or CF</td><td>Master and slave</td><td>Drives are not hot swappable</td></tr>
+  <tr><td>Atom Lite</td><td>CompactFlash</td><td>2 bays &times; master and slave</td><td>Left bay replaces floppy 1, right bay replaces floppy 2</td></tr>
+  <tr><td>Trinity</td><td>SD or SDHC card</td><td>1 card</td><td>Reboot after swapping the card</td></tr>
+</table>
+
+<h3>Floppy drives</h3>
+<p>Floppy drives read and write 800K SAM disks (80 tracks, 2 sides, 10 sectors of 512 bytes), the same format as SAMDOS and MasterDOS. The drive motor stops after a short time with no activity.</p>
+
+<h3>Atom Classic</h3>
+<p>The Atom Classic is a 16-bit IDE interface for a hard drive or CompactFlash adapter, with a master and a slave. It uses the ports of floppy drive 2. Drives prepared by BDOS hold BDOS records, read in the byte order BDOS used so that BDOS can still read them. Drives formatted on a PC hold FAT partitions. ADOS uses LBA addressing, so drives larger than 8G can be used for FAT32.</p>
+
+<h3>Atom Lite</h3>
+<p>The Atom Lite is an 8-bit CompactFlash interface with two bays. The right bay uses the ports of floppy drive 2 and the left bay those of floppy drive 1. Each bay can hold a master and a slave card. Cards prepared by AL-BDOS hold BDOS records, and AL-BDOS can still read them after ADOS has used them. Cards formatted on a PC hold FAT partitions.</p>
+
+<h3>Trinity</h3>
+<p>Trinity is an SD card interface. ADOS reads and writes cards prepared by BDOS, and PC-formatted FAT cards. BDOS supported only SD cards up to 2G; ADOS also supports SDHC cards (4G to 32G), which is what most FAT32 cards are.</p>
+<p class="note">SDHC support has not yet been tested on real hardware. If an SDHC card is not found, try a 2G SD card.</p>
+
+<h3>Using cards made on a PC</h3>
+<ol>
+  <li>Partition the card or drive with an MBR ("Master Boot Record" in the PC's disk tool), not GPT. A card formatted as one volume with no partition table (a "superfloppy") also works.</li>
+  <li>Format each partition as FAT16 or FAT32. Do not use exFAT or NTFS.</li>
+  <li>Copy your files to it. Files saved by ADOS keep their SAM type through their <code>.info</code> files; other files load as CODE.</li>
+</ol>
+
+<h2>8. Real-time clocks</h2>
+<p>When a clock is fitted, ADOS stamps every file you save with the date and time, on SAM and FAT drives alike. There is nothing to set up: the clock is found when ADOS starts, and the start-up screen shows which one it is and what it says the date and time are, for example <code>AL Clock Present&nbsp; Date: 20 Nov 2026 14:37:19</code>.</p>
+<table>
+  <tr><th>Clock</th><th>Start-up screen shows</th></tr>
+  <tr><td>Atom Lite clock (AL+)</td><td>AL Clock Present</td></tr>
+  <tr><td>SAMBUS clock</td><td>SAMBUS Clock Present</td></tr>
+  <tr><td>Dallas clock</td><td>DALLAS Clock Present</td></tr>
+  <tr><td>No clock</td><td>No Clock Present</td></tr>
+</table>
+<p>If more than one clock is fitted, ADOS uses the first it finds, in the order of the table. On a SAM drive the date stamp is stored where MasterDOS keeps it, so MasterDOS shows the same date for the file. On a FAT drive it is the date the file was written, which a PC shows; the dates it was created and last opened are left empty. If the clock is not set, or gives a date that cannot be right, the start-up screen shows <code>Not Set</code>, SAM files are saved without a date and FAT files are dated 1 January 1980.</p>
+
+<h2 class="page">9. Error messages</h2>
+<p>ADOS reports errors with the same numbers as SAMDOS, so a program that traps errors with <code>ON ERROR</code> sees the code it expects. Errors 114 onwards are new in ADOS.</p>
+<table>
+  <tr><th>No.</th><th>Message</th><th>Usual cause</th></tr>
+  <tr><td>81</td><td>Nonsense</td><td>A command's syntax is wrong, for example a missing <code>TO</code></td></tr>
+  <tr><td>82</td><td>No memory</td><td>COPY has less than 32K of free memory in one block</td></tr>
+  <tr><td>83</td><td>Bad statement</td><td>Something extra after the command</td></tr>
+  <tr><td>85</td><td>Disk error</td><td>The drive reported a fault</td></tr>
+  <tr><td>87</td><td>No disk</td><td>No disk or card in the drive</td></tr>
+  <tr><td>89</td><td>Bad file name</td><td>A bad name, wildcards where they aren't allowed, or a name too long</td></tr>
+  <tr><td>91</td><td>Bad device</td><td>The wrong kind of drive for the command, or a letter already in use</td></tr>
+  <tr><td>93</td><td>Verify failed</td><td>VERIFY found a difference</td></tr>
+  <tr><td>94</td><td>Wrong type</td><td>The file isn't the type asked for</td></tr>
+  <tr><td>101</td><td>No AUTO file</td><td>BOOT found no <code>AUTO*</code> file</td></tr>
+  <tr><td>103</td><td>No drive</td><td>No drive has that letter</td></tr>
+  <tr><td>104</td><td>Protected</td><td>The disk, card or image can't be written to</td></tr>
+  <tr><td>105</td><td>Disk full</td><td>The drive is full</td></tr>
+  <tr><td>106</td><td>Dir full</td><td>No free directory entries</td></tr>
+  <tr><td>107</td><td>File not found</td><td>No file matches the name</td></tr>
+  <tr><td>108</td><td>End of file</td><td>A file ended sooner than expected</td></tr>
+  <tr><td>109</td><td>File name used</td><td>The name exists, or the file is protected</td></tr>
+  <tr><td>113</td><td>Bad hook</td><td>A program called a hook ADOS doesn't know</td></tr>
+  <tr><td>114</td><td>No record</td><td>The BDOS record doesn't exist</td></tr>
+  <tr><td>115</td><td>Not a SAM disk</td><td>The disk isn't in a format ADOS can read, such as FAT12</td></tr>
+  <tr><td>116</td><td>Dir not found</td><td>No directory with that name</td></tr>
+  <tr><td>117</td><td>Dir not empty</td><td>ERASE DIR on a directory that still holds files</td></tr>
+  <tr><td>118</td><td>Fragmented</td><td>A disk image is in more than 12 pieces on the card</td></tr>
+  <tr><td>119</td><td>File not open</td><td>A stream hook with no file open (Appendix A)</td></tr>
+</table>
+
+<h2 class="page">Appendix A. DOS hook codes</h2>
+<p>Machine code programs call ADOS through the ROM's DOS hook codes, as with SAMDOS: put the arguments in the main registers, then <code>RST 8</code> followed by the hook code. Results come back in the alternate registers. Errors end in a BASIC error, unless DVAR 48 is set (Appendix B): then carry is set in F' and A' holds the error number. Hooks from 128 to 194 that ADOS does not list below do nothing. Hook 195 gives a long name for the next hook that reads a header (below). A code outside 128&ndash;195 gives <code>Bad hook</code>.</p>
+<table>
+  <tr><th>Code</th><th>What it does</th><th>Arguments</th><th>Results</th></tr>
+  <tr><td>128</td><td>Load and run the <code>AUTO*</code> file if there is one (F9)</td><td></td><td></td></tr>
+  <tr><td>129</td><td>Find a file and give its header</td><td>IX = header with type and name</td><td>Header at &amp;4B50</td></tr>
+  <tr><td>130</td><td>Load the file found by 129</td><td>HL = address (section C), C = 16K pages, DE = bytes mod 16K</td><td></td></tr>
+  <tr><td>131</td><td>Verify it</td><td>As 130</td><td></td></tr>
+  <tr><td>132</td><td>Save</td><td>IX = full 48-byte header</td><td></td></tr>
+  <tr><td>134</td><td>Verify sectors (BDOS)</td><td>As 162</td><td></td></tr>
+  <tr><td>135</td><td>Select the default drive (starts ADOS at boot)</td><td></td><td></td></tr>
+  <tr><td>136</td><td>As 128, but error 101 if there is no <code>AUTO*</code> file</td><td></td><td></td></tr>
+  <tr><td>139</td><td>DVAR: the address of DOS variable n (BASIC's <code>DVAR n</code>). Every DOS has this hook</td><td>n on the calculator stack</td><td>The address on the calculator stack</td></tr>
+  <tr><td>142</td><td>PATH$</td><td></td><td>String on the calculator stack</td></tr>
+  <tr><td>145</td><td>Set the current drive and directory (<code>DIR =</code>)</td><td>A = page, DE = address, BC = length of the name</td><td></td></tr>
+  <tr><td>149</td><td>Write a sector</td><td>As 160</td><td></td></tr>
+  <tr><td>156</td><td>Select a record on the BDOS card (BDOS)</td><td>A = 0: HL = record number; A = 1: HL = address of a 16-character name</td><td></td></tr>
+  <tr><td>157</td><td>Verify a block from the stream (BDOS)</td><td>As 161</td><td>As 161</td></tr>
+  <tr><td>158</td><td>Open a file as a stream</td><td>IX = header with type and name</td><td>Header at &amp;4B50, DE':HL' = length</td></tr>
+  <tr><td>159</td><td>Read one byte from the stream</td><td></td><td>A' = the byte</td></tr>
+  <tr><td>160</td><td>Read a sector</td><td>A = drive (1, 2 or a letter), D = track, E = sector, HL = address 16384&ndash;65535</td><td></td></tr>
+  <tr><td>161</td><td>Read a block from the stream</td><td>A = 16K pages, DE = bytes mod 16K, HL = address (section C)</td><td>C':DE' = bytes read, B':HL' = next free byte</td></tr>
+  <tr><td>162</td><td>Read sectors (BDOS)</td><td>A = drive, D = track, E = sector, C = page, HL = offset, IX = how many</td><td></td></tr>
+  <tr><td>163</td><td>Write sectors (BDOS)</td><td>As 162</td><td></td></tr>
+  <tr><td>165</td><td>Print a directory listing</td><td>IX = header with the name or pattern</td><td></td></tr>
+  <tr><td>166</td><td>Erase a file</td><td>IX = header with the name</td><td></td></tr>
+  <tr><td>192</td><td>Move the stream to a position</td><td>DE:HL = position</td><td></td></tr>
+  <tr><td>193</td><td>The stream's position</td><td></td><td>DE':HL' = position</td></tr>
+  <tr><td>194</td><td>Close the stream</td><td></td><td></td></tr>
+  <tr><td>195</td><td>Long name for the next hook that reads a header</td><td>A = page, DE = address, BC = length of the name (0 cancels)</td><td></td></tr>
+</table>
+<p><b>Long names.</b> A header has room for a 14-character name. Hook 195 gives a longer one, up to 255 characters, with a drive, a path and a FAT long name allowed as in <code>LOAD</code>. The next hook that reads a header (129&ndash;132, 158, 165 or 166) uses it in place of the header's name, once. The arguments are those of hook 145: A = the page, DE = the address as if that page were in section C. With BASIC's paging, a name at 16384&ndash;32767 is page 0 at the address + &amp;4000, one at 32768&ndash;49151 page 1 at the same address, and one at 49152&ndash;65535 page 2 at the address &minus; &amp;4000. Call 195 just before that hook: anything else that reads a name in between, or any BASIC error, cancels it. It also works through the direct entry.</p>
+<p><b>BDOS hooks.</b> Drive 1 is A:, drive 2 is the BDOS card in use (B: if there is none), and a letter such as "C" can be given instead. The sector hooks work on any SAM drive: a floppy, the current BDOS record, or a disk image. For 160 and 149 the address is read as BASIC&rsquo;s memory is paged (16384&ndash;65535, pages 0&ndash;2). A track and sector that isn&rsquo;t on the disk gives <code>Disk error</code>. <code>Docs/Hooks.md</code> lists the BDOS DVARs and the details.</p>
+<p>158, 159 and 161 have the same numbers and arguments as in MasterDOS and BDOS. A stream reads one file a piece at a time, from any position, on any drive, including inside a disk image. Positions count data bytes only, so position 0 is the first byte of the data on every drive. Streams are read only. A stream hook with no file open gives <code>File not open</code>, except 194 (close).</p>
+<p><b>Is ADOS loaded?</b> Codes 192 and up are ADOS's own, and MasterDOS crashes on unknown codes above 174, so check first. DOSFLG (&amp;5BC2) is 0 if no DOS is loaded. Otherwise read DVAR 7 through hook 139, which every DOS has (from BASIC, <code>PEEK DVAR 7</code>): ADOS holds version &times; 10 + 50 there, 61 for ADOS 1.1. To be certain it is ADOS and not another DOS using the same number, also check for the letters <code>ADOS</code> at offset &amp;0212 of the DOS page, followed by the version (major, minor). <code>Docs/Hooks.md</code> has the code for both.</p>
+<p><b>Direct entry (from 1.1).</b> A program that has taken the machine over (ROM 0 paged out, the system variables reused, its own interrupts) can't use <code>RST 8</code>. Instead it pages the DOS page into section C and calls offset &amp;0209 in it, with the hook code in the byte after the call: <code>CALL &amp;8209</code> / <code>DB 161</code>. The arguments and results are the hook's, in the main registers. An error comes back to the program with carry set and A = the error number. Hooks 132, 145, 158, 161, 192&ndash;194 and 195 can be called this way; for 161, C gives the page to read into. The paging and interrupt state are as they were. Interrupts stay on except while a piece of data is copied, so an IM2 handler kept in the page after the DOS page keeps running. <code>Docs/Hooks.md</code> has the details.</p>
+<p><b>Seeking</b> reads only the sector the new position is in. On FAT it follows the cluster chain without reading the data. A SAM file whose sectors are in one run (as SAVE makes them when there is room) goes straight to the right sector. Other SAM files are read through, because each sector holds the link to the next.</p>
+<p>The ADOS source includes <code>Docs/Hooks.md</code>, with full details and a worked example.</p>
+
+<h2>Appendix B. Memory use and settings</h2>
+<p>ADOS lives in one 16K page, paged in at &amp;4000&ndash;&amp;7FFF while it runs.</p>
+<table>
+  <tr><th>Address</th><th>Contents</th></tr>
+  <tr><td>&amp;4000&ndash;&amp;4001</td><td>The address of the DVARs as seen in section C (&amp;8220), as in BDOS (put there at boot; on disk these bytes are the file header)</td></tr>
+  <tr><td>&amp;4003&ndash;&amp;4005</td><td>COPY progress</td></tr>
+  <tr><td>&amp;4009&ndash;&amp;40FF</td><td>Boot loader; after boot, the open stream's state and other buffers</td></tr>
+  <tr><td>&amp;4100</td><td>BOOT signature, then shared routines</td></tr>
+  <tr><td>&amp;4200</td><td>Jump block (hooks, syntax, NMI), then the direct entry at &amp;4209</td></tr>
+  <tr><td>&amp;4210</td><td>Error table pointer, then <code>ADOS</code> and the version at &amp;4212, then the direct entry's variables</td></tr>
+  <tr><td>&amp;4220</td><td>DVARs: settings saved with the DOS</td></tr>
+  <tr><td>After the DVARs</td><td>Resident code</td></tr>
+  <tr><td>After the resident code</td><td>Start-up code, reused as about 1.5K of workspace after boot</td></tr>
+  <tr><td>&amp;7DA0&ndash;&amp;7F9F</td><td>Sector buffer (512 bytes)</td></tr>
+  <tr><td>&amp;7FA0&ndash;&amp;7FFF</td><td>Stack</td></tr>
+</table>
+<p>The code that finds the drives is only needed at start-up, so it runs from a spare memory page and takes no room in the DOS page.</p>
+<p><b>In the system page</b> ADOS keeps a 32-byte routine at &amp;4BA0, and points the ROM's RST8V vector (&amp;5AEE) at it. ROM 3.0 refuses a <code>LOAD</code> or <code>SAVE</code> name over 14 characters with error 18, and its error handler calls RST8V first. For that error the routine passes the whole name to ADOS (hook 195), then lets the ROM carry on as if the name were 14 characters. Every other <code>RST 8</code> goes straight through. ADOS puts the vector and routine back whenever the DOS is initialised (hook 135).</p>
+
+<h3>DVARs</h3>
+<p>The DVARs at &amp;4220 hold the settings below. DVAR 0&ndash;45 are laid out as in BDOS, so BDOS programs find what they expect, and DVAR 0&ndash;7 also mean the same as in SAMDOS and MasterDOS. Changing a DVAR with <code>POKE DVAR n,value</code> and saving the DOS file keeps it for the next boot.</p>
+<table>
+  <tr><th>DVAR</th><th>Address</th><th>Setting</th><th>Default</th></tr>
+  <tr><td>0</td><td>&amp;4220</td><td>Border flash while reading and writing: the colour is (DVAR 0 AND 7) AND the sector number. 0 turns it off</td><td>7</td></tr>
+  <tr><td>1&ndash;45</td><td>&amp;4221&ndash;&amp;424D</td><td>BDOS&rsquo;s, describing the BDOS card in use: DVAR 25 is its current record (POKE it to select another), 23 the number of records, 39&ndash;44 the date and time. <code>Docs/Hooks.md</code> lists them all</td><td>&mdash;</td></tr>
+  <tr><td>7</td><td>&amp;4227</td><td>Version &times; 10 + 50</td><td>61</td></tr>
+  <tr><td>46</td><td>&amp;424E</td><td>Drive timeout, in units of about 1.5 seconds</td><td>3</td></tr>
+  <tr><td>47</td><td>&amp;424F</td><td>Drive selected at boot</td><td>"A"</td></tr>
+  <tr><td>48</td><td>&amp;4250</td><td>Not 0: a failed hook gives the error back to the machine code program (carry set, A' = the error) instead of a BASIC error. For programs only; see the hook guide</td><td>0</td></tr>
+</table>
+<p>While DVAR 48 is set, commands typed in BASIC and the ROM&rsquo;s own LOAD and SAVE also fail without a message, so a program should set it only around its own calls.</p>
+
+<h2 class="page">Appendix C. Planned features and known limits</h2>
+<h3>Known limits in this version</h3>
+<ul>
+  <li><b>FAT12</b> drives are shown at start-up but cannot be read. GPT partition tables are not supported.</li>
+  <li><b>Dates on FAT:</b> DIR does not show dates, and RENAME gives a FAT file the time of the rename.</li>
+  <li><b>Single-drive copies:</b> MasterDOS asks you to swap disks when copying from one floppy to another in the same drive. ADOS does not, so copy through a second drive or a disk image.</li>
+  <li><b>Inside a disk image,</b> the DIR heading and PATH$ show only the path inside the image, not the FAT folder and image name.</li>
+  <li><b>New cards and drives</b> are found only when ADOS starts.</li>
+  <li><b>Streams</b> are read only, and don't notice a floppy being changed while a file is open (close the file, change the disk, and open it again).</li>
+  <li><b>Long listings:</b> a long wildcard COPY or DIR stops at the ROM's <code>Scroll?</code> prompt when the screen fills, as in SAMDOS.</li>
+</ul>
+
+<h3>Planned</h3>
+<table>
+  <tr><th>Feature</th><th>Notes</th></tr>
+  <tr><td><code>DEVICE</code></td><td>Move a drive to another letter and save the setting, without POKE</td></tr>
+  <tr><td><code>FORMAT</code> for floppies and BDOS records</td><td>Today FORMAT only makes disk images</td></tr>
+  <tr><td><code>PROTECT</code> / <code>HIDE</code></td><td>Protect or hide a file</td></tr>
+  <tr><td><code>READ AT</code> / <code>WRITE AT</code></td><td>Read or write a single sector</td></tr>
+  <tr><td><code>OPEN #</code> and <code>POINT</code> on files</td><td>BASIC streams to files, as in MasterDOS, and writing through a stream</td></tr>
+  <tr><td>Dates in DIR</td><td>Show each file&rsquo;s date in DIR listings</td></tr>
+  <tr><td>ATAPI CD-ROM</td><td>On the Atom Classic, read only (ISO 9660)</td></tr>
+  <tr><td>RAM discs</td><td>If memory allows</td></tr>
+</table>
+
+</body>
+</html>
