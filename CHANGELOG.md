@@ -2,6 +2,21 @@
 
 All notable changes to ADOS for the SAM Coupé.
 
+## 1.3a (25 November 2026)
+
+A new `ADOS-1.3.mgt` disk. ADOS itself is the same as in 1.3 (`DVAR 7` is still 63, and `ADOS-1.3.bin` is unchanged). If you downloaded the 1.3 disk, download it again.
+
+### Fixed
+
+- **BDOS2FAT and MAKEBOOT now wait for key presses.** They went on without one, so they stopped at their first question and returned to BASIC with the screen cleared.
+- **Messages can be read before the utilities return to BASIC.** Both now ask for a key first.
+- **MAKEBOOT's final message starts on a fresh screen**, so it isn't cleared part way through.
+
+### Changed
+
+- **The utilities start as soon as they load:** `CLEAR 32767: LOAD "BDOS2FAT" CODE` or `CLEAR 32767: LOAD "MAKEBOOT" CODE`. No `CALL` is needed.
+- **The boot file on the disk is now named `ADOS`**, not `main.O`.
+
 ## 1.3 (25 November 2026)
 
 ### Added
