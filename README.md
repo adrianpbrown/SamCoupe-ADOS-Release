@@ -4,7 +4,7 @@ ADOS is a single DOS for the SAM Coupé. It takes the place of SAMDOS, BDOS (Tri
 
 ADOS fits in one 16K DOS page. Its start-up code is thrown away after boot and the memory is reused for buffers, so it needs no more memory than SAMDOS.
 
-Current version: **1.2**.
+Current version: **1.3**.
 
 ## Features
 
@@ -33,7 +33,7 @@ Cards made on a PC must use an MBR partition table (or no partition table at all
 
 ## Getting started
 
-1. Write [Release/ADOS-1.2.mgt](Release/ADOS-1.2.mgt) to a floppy disk, or attach it as drive 1 in SimCoupe.
+1. Write [Release/ADOS-1.3.mgt](Release/ADOS-1.3.mgt) to a floppy disk, or attach it as drive 1 in SimCoupe.
 2. Press **F9** or type `BOOT`. ADOS lists the interfaces, drives and clock it found and selects a drive.
 3. Use SAM BASIC as normal:
 
@@ -45,7 +45,7 @@ LOAD "A:GAME"             load from drive A:
 COPY "A:*" TO "C:\BACKUP\"
 ```
 
-To load ADOS from another DOS or loader instead, [Release/ADOS-1.2.bin](Release/ADOS-1.2.bin) is the DOS code on its own (load address 49161), with its SAM header in `ADOS-1.2.bin.info`.
+To load ADOS from another DOS or loader instead, [Release/ADOS-1.3.bin](Release/ADOS-1.3.bin) is the DOS code on its own (load address 49161), with its SAM header in `ADOS-1.3.bin.info`.
 
 ADOS finds drives only at start-up. If you fit a card after booting, reset and boot again.
 
@@ -58,6 +58,7 @@ ADOS finds drives only at start-up. If you fit a card after booting, reset and b
 | [Disk Images](Docs/Disk%20Images.md) | Using `.MGT` images on FAT drives |
 | [Hook Codes](Docs/Hooks.md) | For machine code: hooks, streams, long names, BDOS compatibility and the direct entry |
 | [SAM Info Format](Docs/SAM%20Info%20Format.md) | The `.info` files that hold SAM file details on FAT |
+| [Utilities](Docs/Utilities.md) | The programs on the ADOS disk: BDOS2FAT turns a BDOS drive into FAT32 with its records as disk images, MAKEBOOT makes an Atom Lite card boot ADOS |
 
 ## Not done yet
 

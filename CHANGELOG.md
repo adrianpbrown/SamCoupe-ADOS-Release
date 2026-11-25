@@ -2,6 +2,21 @@
 
 All notable changes to ADOS for the SAM Coupé.
 
+## 1.3 (25 November 2026)
+
+### Added
+
+- **ADOS can boot from an Atom Lite card**, with no floppy disk, using the Atom Lite boot ROM (AL BOOT ROM). On a BDOS card, hold B while resetting to boot BDOS instead. A card boot shows no start-up screen. Tested in SimCoupe, not yet on real hardware.
+- **MAKEBOOT** sets a card up for this, on the SAM itself: FAT cards with free sectors before the partition or in their reserved area, and AL-BDOS cards with a record that has never been formatted. It is on the ADOS disk; see Docs/Utilities.md.
+- **BDOS2FAT** turns a BDOS drive into a FAT32 drive, on the SAM itself, with every record that holds files as an 800K disk image. It is on the ADOS disk; see Docs/Utilities.md.
+- **`LOAD n`** loads a file by its number in the `DIR` listing, on SAM disks, BDOS records and disk images.
+
+### Fixed
+
+- **Loads that carry on after one header now work**, such as a SCREEN$ and its palette.
+- **Hook 129 works when IX points at the caller's own memory** (&8000 and above).
+- **`RECORD` no longer shows `?` after record names.** AL-BDOS ends a name with 0 bytes rather than spaces, and ADOS printed them. A name now ends at its first 0 byte.
+
 ## 1.2 (25 November 2026)
 
 ### Fixed

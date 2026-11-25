@@ -50,6 +50,8 @@ MasterDOS folders inside an image work as on a floppy (`OPEN DIR`, `DIR = "SUB"`
 
 A drive stays inside its image until you leave it or reset.
 
+Inside an image, or on a mounted drive, `DIR` numbers the files and `LOAD n` loads one by its number, as on a SAMDOS or BDOS disk: `DIR = "D:\GAMES\CHAOS.MGT"`, then `DIR`, then `LOAD 2`.
+
 ## Mounting an image on a drive letter
 
 ```

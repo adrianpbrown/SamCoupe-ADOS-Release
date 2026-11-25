@@ -15,6 +15,7 @@ For disk images, see [Disk Images](Disk%20Images.md). For machine code programs,
 | `DIR = "X:path"` | Change the current drive and directory |
 | `PATH$` | The current drive and path, as a string |
 | `LOAD`, `SAVE`, `VERIFY` | The ROM's commands, on any drive |
+| `LOAD n` | Load file number n of the `DIR` listing (SAM disks and disk images) |
 | `ERASE "name"` | Erase files (wildcards allowed) |
 | `RENAME "old" TO "new"` | Rename a file or directory |
 | `OPEN DIR "name"` | Make a directory |
@@ -151,6 +152,15 @@ VERIFY "D:DATA.BIN" CODE
 
 **Dates.** If a clock is fitted, SAVE stamps the file with the date and time. On a SAM disk the stamp goes where MasterDOS keeps it. On a FAT drive it is the file's date, the one a PC shows. With no clock, a SAM file has no date and a FAT file is dated 1 January 1980.
 
+**Loading by number.** On a SAM disk (a floppy, a BDOS record, or a FAT drive inside a disk image) `LOAD n` loads the file that `DIR` lists as number n, as SAMDOS and BDOS do:
+
+```
+DIR
+LOAD 3
+```
+
+The number is the file's entry in the directory, so a name that `DIR` shows in another folder, or a number with no file, gives error 107, "File not found". BASIC, CODE and SCREEN$ files load as `LOAD "name"` would. On a FAT drive outside an image there are no numbers, and you get "Bad device".
+
 ### Files on FAT drives
 
 A file saved to a FAT drive holds only its data, so a PC can read it as it is. The SAM details (type, name, load and run addresses) go in a hidden file beside it with `.info` added to the name. For example, `GAME.BIN` gets `GAME.BIN.info`. ADOS keeps the two together: ERASE removes both and RENAME renames both.
@@ -280,7 +290,7 @@ These work on a Trinity or Atom Lite holding BDOS records. On any other drive RE
 RECORD
 ```
 
-Lists the records that have names, with their numbers.
+Lists the records that have names, with their numbers. A name is up to 16 characters, and ends early at a 0 byte: AL-BDOS ends names with zeros, BDOS pads them with spaces.
 
 ### RECORD n
 
@@ -336,7 +346,7 @@ ADOS keeps its settings in DOS variables, read with `PEEK DVAR n` and changed wi
 |------|---------|---------|
 | 0 | Border flash while sectors are read or written. The colour is (DVAR 0 AND 7) AND the sector number. 0 turns the flash off | 7 |
 | 1-45 | Laid out as in BDOS, for BDOS programs: DVAR 25 is the BDOS card's current record (see [BDOS programs](#bdos-programs)). The full list is in [Hook Codes](Hooks.md#bdos-compatibility) | |
-| 7 | The version × 10 + 50 (62 is ADOS 1.2). Don't change it | 62 |
+| 7 | The version × 10 + 50 (63 is ADOS 1.3). Don't change it | 63 |
 | 46 | Drive timeout, about 1.5 seconds per unit. A floppy drive with no disk gives "No disk" after it | 3 |
 | 47 | The drive selected at boot. If there is no such drive, the first letter that has a drive is used | "A" |
 | 48 | For machine code programs only: not 0 gives hook errors back to the program instead of reporting them. See [Hook Codes](Hooks.md#getting-errors-back-instead-of-a-basic-error) | 0 |

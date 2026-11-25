@@ -30,13 +30,16 @@
   th, td { border: 1px solid #ccc; padding: 3pt 5pt; text-align: left; vertical-align: top; }
   th { background: #eee; }
   .note { border-left: 3px solid #999; padding-left: 8pt; color: #333; }
+  figure { margin: 4pt 0 10pt; break-inside: avoid; }
+  figure img { width: 12cm; max-width: 100%; border: 1px solid #ccc; display: block; }
+  figcaption { font-size: 9pt; color: #555; margin-top: 2pt; }
   .syntax { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; margin: 0 0 6pt; }
 </style>
 </head>
 <body>
 
 <h1>ADOS User Manual</h1>
-<div class="byline">Version 1.2 &middot; 25 November 2026 &middot; Adrian Brown</div>
+<div class="byline">Version 1.3 &middot; 25 November 2026 &middot; Adrian Brown</div>
 
 <h2>1. Introduction</h2>
 <p>ADOS is one DOS for the SAM Coup&eacute;. It replaces SAMDOS, BDOS (Trinity) and AL-BDOS (Atom Lite), reads and writes MasterDOS disks, and adds PC FAT16 and FAT32 cards and drives. You load it once and every drive you own is available under its own letter.</p>
@@ -68,20 +71,22 @@
 <h3>What's new</h3>
 <table>
   <tr><th>Version</th><th>Changes</th></tr>
+  <tr><td>1.3</td><td>A file loaded in several parts after one header carries on where it left off, instead of starting again each time. This fixes SCREEN$ files loading with the wrong palette.</td>
   <tr><td>1.2</td><td>Atom Lite cards formatted by AL-BDOS 2.x are found as BDOS cards. AL-BDOS 2.x puts a PC FAT16 boot sector on sector 0 of the card, so ADOS 1.1 took the card for a FAT drive.</td></tr>
   <tr><td>1.1</td><td>First release. For machine code, as well as everything above: streams (hooks 158, 159, 161 and 192&ndash;194) and a direct entry (<code>CALL &amp;8209</code>) for programs that have taken the machine over. BDOS programs work as under BDOS: the DVARs are laid out as in BDOS (their address is at offset 0 of the DOS page), <code>D2:</code> is the BDOS card, and BDOS&rsquo;s record and sector hooks (134, 149, 156, 157, 160, 162 and 163) are there. With more than one BDOS card, drive 2 is the one used last. Hook 139 (<code>DVAR</code>) gives the DVARs: the version is in DVAR 7, DVAR 0 sets the border flash on disk access, and DVAR 48 gives hook errors back to the program. Hook 195 gives a long name (up to 255 characters, with a drive and path) for the next hook that reads a header, so machine code can load, save, open, list and erase files with long names too, through <code>RST 8</code> or the direct entry (Appendix A).</td></tr>
 </table>
 
 <h3>About this manual</h3>
-<p>This manual describes ADOS version 1.2 as it stands on 25 November 2026. Features still to come are collected in Appendix C. Section 5 is the reference for every command; the other sections explain how to use them.</p>
+<p>This manual describes ADOS version 1.3 as it stands on 25 November 2026. Features still to come are collected in Appendix C. Section 5 is the reference for every command; the other sections explain how to use them.</p>
 <p>You should already know SAM BASIC. Where ADOS works the same as SAMDOS (for example <code>SAVE</code> and <code>LOAD</code>), this manual describes only what is different.</p>
 
 <h2 class="page">2. Getting started</h2>
 <p>To start ADOS, put the ADOS system disk in drive 1 and press F9, or type <code>BOOT</code> and press RETURN. ADOS checks your hardware, shows what it found, and selects a drive. You can then use BASIC as normal.</p>
+<p>ADOS can also start from an Atom Lite card with no floppy disk. See MAKEBOOT in Section 10.</p>
 
 <h3>The start-up screen</h3>
 <p>While it starts, ADOS looks for every clock and storage interface it knows about. The screen then shows something like this:</p>
-<pre class="screen">     -= A-DOS Version 1.2 (c) 2026 by Adrian Brown =-
+<pre class="screen">     -= A-DOS Version 1.3 (c) 2026 by Adrian Brown =-
 
 Internal Memory: <span class="r">512K</span>
 External Memory: <span class="r">None Present</span>
@@ -334,7 +339,7 @@ CLOSE "B:"</pre>
 
 <h3>RECORD</h3>
 <div class="syntax">RECORD<br>RECORD n<br>RECORD name</div>
-<p>Works on the current drive, which must be a BDOS drive; otherwise ADOS reports <code>Bad device</code>. <code>RECORD</code> on its own lists every record that has a name, with its number. <code>RECORD n</code> or <code>RECORD name</code> selects a record; case is ignored. If the record does not exist, ADOS reports <code>No record</code>. Select the drive first with <code>DIR =</code>:</p>
+<p>Works on the current drive, which must be a BDOS drive; otherwise ADOS reports <code>Bad device</code>. <code>RECORD</code> on its own lists every record that has a name, with its number. A name is up to 16 characters, and ends early at a 0 byte (AL-BDOS ends names with zeros, BDOS pads them with spaces). <code>RECORD n</code> or <code>RECORD name</code> selects a record; case is ignored. If the record does not exist, ADOS reports <code>No record</code>. Select the drive first with <code>DIR =</code>:</p>
 <pre>DIR = "C:"
 RECORD
 RECORD 12
@@ -432,6 +437,81 @@ RECORD "UTILITIES"</pre>
   <tr><td>119</td><td>File not open</td><td>A stream hook with no file open (Appendix A)</td></tr>
 </table>
 
+<h2 class="page">10. Utilities</h2>
+<p>The ADOS disk comes with utility programs. Each is a program of its own, not part of ADOS. It runs from BASIC under any DOS.</p>
+<table>
+  <tr><th>Utility</th><th>What it does</th></tr>
+  <tr><td>BDOS2FAT</td><td>Turns a BDOS drive into a FAT32 drive, with every record in use as an 800K disk image file</td></tr>
+  <tr><td>MAKEBOOT</td><td>Makes an Atom Lite card boot ADOS by itself at power on, with no floppy disk</td></tr>
+</table>
+
+<h3>BDOS2FAT</h3>
+<p>BDOS2FAT turns a BDOS drive into a FAT32 drive, on the SAM itself. Every record in use becomes a disk image file in the root folder, which ADOS, SimCoupe and a PC can all use. The drive can be an Atom Classic or Atom Lite hard drive or card, or a Trinity SD card.</p>
+<ul>
+  <li><b>What you get.</b> A FAT32 drive with an MBR and one partition covering the whole drive, and one 800K image (MGT order, the same as an <code>.MGT</code> file) for each record in use. Open one with <code>DIR = "C:\0012 GAMES.MGT"</code> or mount it with <code>OPEN "B:" TO ...</code> (Section 6).</li>
+  <li><b>Which records.</b> A record is converted if its directory holds at least one file, even if the first files were erased. A name on its own doesn't count: BDOS names every record it formats, so a card can have thousands of named records that are empty (<code>blank302</code>, <code>blank303</code>, ...). Records with no files are left out, and their space becomes free space.</li>
+  <li><b>Names.</b> You choose either the record's number and name (<code>0012 GAMES.MGT</code>, <code>0007.MGT</code> for a record with no name), or the name only (<code>GAMES.MGT</code>, <code>Record 7.MGT</code> for no name). With the name only, a name already used by an earlier record gets the record's number added: <code>GAMES (37).MGT</code>. You also choose <code>.MGT</code> or <code>.DSK</code>. The characters <code>" * / : &lt; &gt; ? \ |</code> become <code>_</code>, spaces at either end are removed, and the SAM's &pound; and &copy; stay as &pound; and &copy;.</li>
+</ul>
+
+<h3>Before you start</h3>
+<ul>
+  <li><b>Back up the drive.</b> BDOS2FAT rewrites the whole drive, and BDOS can't use it afterwards. On a PC, take an image of the card or drive first.</li>
+  <li><b>Free records.</b> The FAT goes at the start of the drive, so the records there are moved into records that aren't in use: usually one or two. BDOS2FAT says if there aren't enough before it changes anything.</li>
+  <li><b>Size.</b> The drive must be at least 33MB, the smallest a FAT32 drive can be.</li>
+</ul>
+
+<h3>Running it</h3>
+<pre>CLEAR 32767: LOAD "BDOS2FAT" CODE: CALL 32768</pre>
+<p>It changes to screen mode 3 and lists the BDOS drives it finds. Press a drive's number, or <code>N</code> to stop. It looks at the drive, only reading, then shows its size, the records in use, how many must move, and the FAT32 cluster size, with the choices for the names. Press <code>1</code> or <code>2</code> for the names, <code>M</code> or <code>D</code> for the extension, then <code>Y</code> to convert the drive (and <code>Y</code> again when asked if you are sure), or <code>N</code> to leave it unchanged.</p>
+<figure><img src="images/bdos2fat-drives.png" alt="The BDOS drives found (here an Atom Lite master and slave)"><figcaption>The BDOS drives found (here an Atom Lite master and slave)</figcaption></figure>
+<figure><img src="images/bdos2fat-options.png" alt="The drive, what will happen, and the choices for the names"><figcaption>The drive, what will happen, and the choices for the names</figcaption></figure>
+<table>
+  <tr><th>Step</th><th>What it does</th></tr>
+  <tr><td>1</td><td>Looks at the drive and asks before going on. Nothing is written until you have answered Y twice.</td></tr>
+  <tr><td>2</td><td>Copies the records in the way of the FAT (and a partial last record) into free records</td></tr>
+  <tr><td>3</td><td>Converts each record in use where it is</td></tr>
+  <tr><td>4</td><td>Writes the root folder, using the BDOS record names</td></tr>
+  <tr><td>5</td><td>Writes the two FATs</td></tr>
+  <tr><td>6</td><td>Writes the boot sector, then the MBR (this makes it a FAT32 drive)</td></tr>
+</table>
+<p>Step 3 takes most of the time: allow roughly 15&ndash;40 seconds a record. A progress line such as <code>Record 12: 3/9  45%</code> means record 12, the 3rd of the 9 records to convert, 45% of the way through it. When it says <code>Finished</code>, it asks you to press any key, and then reboots the SAM. It doesn't go back to BASIC, because the DOS that is loaded still thinks the drive is a BDOS drive. It stops the same way after a disk error.</p>
+<figure><img src="images/bdos2fat-progress.png" alt="Part way through step 3: record 15, the 6th of 8 to convert, is 55% done"><figcaption>Part way through step 3: record 15, the 6th of 8 to convert, is 55% done</figcaption></figure>
+<figure><img src="images/bdos2fat-finished.png" alt="Finished, waiting for a key to reboot"><figcaption>Finished, waiting for a key to reboot</figcaption></figure>
+
+<h3>If it stops</h3>
+<p>A power cut, a reset or a disk error part way through doesn't lose anything. BDOS2FAT keeps a note in the drive's first sector of how far it has got. Run it again: it lists the drive as <code>Conversion not finished</code>, and carries on from where it stopped. Until it has finished, neither BDOS nor ADOS can use the drive properly, so don't write to it with anything else.</p>
+
+<h3>What it does to the drive</h3>
+<p>A BDOS record already holds exactly the sectors of a disk image, in a different order: BDOS keeps side 1's tracks, then side 2's, while an image interleaves the sides. BDOS2FAT lays the FAT32 drive out so that each record's sectors become its file, so the records stay where they are and only their tracks are put in order. On an Atom Classic it also puts the bytes of each sector in PC order. The clusters are as big as FAT32 allows on the drive, up to 32K, which keeps the FAT small: fewer records need moving, and ADOS finds free space faster. Each image is exactly 25 clusters of 32K, so no space is wasted.</p>
+
+<h3>MAKEBOOT</h3>
+<p>MAKEBOOT makes an Atom Lite card boot ADOS by itself when the SAM is switched on or reset, with no floppy disk and no Liaise. It needs the Atom Lite boot ROM (Edwin Blink's AL BOOT ROM, from World of SAM), which boots from a card whose sector 0 holds a boot loader. MAKEBOOT puts ADOS's loader there and ADOS itself in sectors that belong to no file system.</p>
+<ul>
+  <li><b>Sector 0</b> gets the loader, in the bytes the layout leaves free. An MBR's partition table, or a FAT boot sector's BPB, stays as it is, so a PC still sees the card as it was.</li>
+  <li><b>38 sectors of ADOS</b> go in the first run of free sectors: the gap before the first partition, or the reserved sectors of a FAT volume. On a BDOS card they go in a record that has never been formatted, and the card's own boot sector is saved after them.</li>
+  <li><b>Nothing else is changed.</b> No file, FAT or directory is touched, and no formatted BDOS record. If there is no room, MAKEBOOT says so before it writes anything.</li>
+</ul>
+<table>
+  <tr><th>Card</th><th>Result</th></tr>
+  <tr><td>Used on a PC (MBR, FAT16 or FAT32)</td><td>Works if there is a gap before the first partition (PC tools usually leave 2048 sectors)</td></tr>
+  <tr><td>Converted by BDOS2FAT</td><td>Works with the BDOS2FAT on this release's disk, which keeps 64 or more reserved sectors. A card converted by an earlier one may keep only 32, and is then refused</td></tr>
+  <tr><td>FAT32 with no partition table</td><td>Usually refused: its reserved sectors are too few</td></tr>
+  <tr><td>AL-BDOS (or a renamed one)</td><td>Works if one of its records has never been formatted. Formatting that record in BDOS would remove ADOS. If every record is formatted it is refused</td></tr>
+  <tr><td>Plain BDOS, with no boot sector</td><td>Refused: the ROM can't boot it</td></tr>
+</table>
+<p>MAKEBOOT is on the ADOS disk. Load and run it from BASIC:</p>
+<pre>CLEAR 32767: LOAD "MAKEBOOT" CODE: CALL 32768</pre>
+<p>It lists the Atom Lite drives that have a card. Press a drive's number, or N to stop. It reads the card (only reading), shows where ADOS will go, and asks. Press Y to write it, or N to leave the card unchanged. It writes ADOS first and checks it, then writes sector 0 last, so a card is never left with a boot sector that has nothing to load. Run MAKEBOOT again to update ADOS on the card.</p>
+<h3>Booting from the card</h3>
+<p>Fit the AL BOOT ROM and switch on or reset. The card's boot sector loads ADOS and starts it, then the SAM goes to BASIC, so DIR, LOAD and the rest work. At this point in the ROM's start up the screen can't be set up, so ADOS shows no start-up screen as it does from a floppy.</p>
+<ul>
+  <li><b>Drives.</b> The default drive is the floppy (<code>A:</code>), as after a floppy boot. Type the card's drive letter to use the card, for example <code>C:</code>.</li>
+  <li><b>F9</b> doesn't restart the SAM. It loads the <code>AUTO*</code> file from the current drive, and reports <code>No Disk</code> if that is the floppy and it is empty. To boot the card again, reset.</li>
+  <li><b>Floppy or another card.</b> Hold SPACE at reset to boot from a floppy instead, or 1 to 4 to pick a card, as the ROM does for any DOS.</li>
+  <li><b>BDOS cards.</b> Hold B while resetting to boot BDOS instead of ADOS. With no key held, ADOS loads.</li>
+  <li><b>BDOS menu programs</b>, such as the record selector in a card's first record, don't work under ADOS: they use BDOS's private memory, and the list shows rubbish. Use them under BDOS (hold B). If you have run one under ADOS, reset the SAM, as it may have changed ADOS's memory.</li>
+</ul>
+
 <h2 class="page">Appendix A. DOS hook codes</h2>
 <p>Machine code programs call ADOS through the ROM's DOS hook codes, as with SAMDOS: put the arguments in the main registers, then <code>RST 8</code> followed by the hook code. Results come back in the alternate registers. Errors end in a BASIC error, unless DVAR 48 is set (Appendix B): then carry is set in F' and A' holds the error number. Hooks from 128 to 194 that ADOS does not list below do nothing. Hook 195 gives a long name for the next hook that reads a header (below). A code outside 128&ndash;195 gives <code>Bad hook</code>.</p>
 <table>
@@ -466,7 +546,7 @@ RECORD "UTILITIES"</pre>
 <p><b>Long names.</b> A header has room for a 14-character name. Hook 195 gives a longer one, up to 255 characters, with a drive, a path and a FAT long name allowed as in <code>LOAD</code>. The next hook that reads a header (129&ndash;132, 158, 165 or 166) uses it in place of the header's name, once. The arguments are those of hook 145: A = the page, DE = the address as if that page were in section C. With BASIC's paging, a name at 16384&ndash;32767 is page 0 at the address + &amp;4000, one at 32768&ndash;49151 page 1 at the same address, and one at 49152&ndash;65535 page 2 at the address &minus; &amp;4000. Call 195 just before that hook: anything else that reads a name in between, or any BASIC error, cancels it. It also works through the direct entry.</p>
 <p><b>BDOS hooks.</b> Drive 1 is A:, drive 2 is the BDOS card in use (B: if there is none), and a letter such as "C" can be given instead. The sector hooks work on any SAM drive: a floppy, the current BDOS record, or a disk image. For 160 and 149 the address is read as BASIC&rsquo;s memory is paged (16384&ndash;65535, pages 0&ndash;2). A track and sector that isn&rsquo;t on the disk gives <code>Disk error</code>. <code>Docs/Hooks.md</code> lists the BDOS DVARs and the details.</p>
 <p>158, 159 and 161 have the same numbers and arguments as in MasterDOS and BDOS. A stream reads one file a piece at a time, from any position, on any drive, including inside a disk image. Positions count data bytes only, so position 0 is the first byte of the data on every drive. Streams are read only. A stream hook with no file open gives <code>File not open</code>, except 194 (close).</p>
-<p><b>Is ADOS loaded?</b> Codes 192 and up are ADOS's own, and MasterDOS crashes on unknown codes above 174, so check first. DOSFLG (&amp;5BC2) is 0 if no DOS is loaded. Otherwise read DVAR 7 through hook 139, which every DOS has (from BASIC, <code>PEEK DVAR 7</code>): ADOS holds version &times; 10 + 50 there, 62 for ADOS 1.2. To be certain it is ADOS and not another DOS using the same number, also check for the letters <code>ADOS</code> at offset &amp;0212 of the DOS page, followed by the version (major, minor). <code>Docs/Hooks.md</code> has the code for both.</p>
+<p><b>Is ADOS loaded?</b> Codes 192 and up are ADOS's own, and MasterDOS crashes on unknown codes above 174, so check first. DOSFLG (&amp;5BC2) is 0 if no DOS is loaded. Otherwise read DVAR 7 through hook 139, which every DOS has (from BASIC, <code>PEEK DVAR 7</code>): ADOS holds version &times; 10 + 50 there, 63 for ADOS 1.3. To be certain it is ADOS and not another DOS using the same number, also check for the letters <code>ADOS</code> at offset &amp;0212 of the DOS page, followed by the version (major, minor). <code>Docs/Hooks.md</code> has the code for both.</p>
 <p><b>Direct entry (from 1.1).</b> A program that has taken the machine over (ROM 0 paged out, the system variables reused, its own interrupts) can't use <code>RST 8</code>. Instead it pages the DOS page into section C and calls offset &amp;0209 in it, with the hook code in the byte after the call: <code>CALL &amp;8209</code> / <code>DB 161</code>. The arguments and results are the hook's, in the main registers. An error comes back to the program with carry set and A = the error number. Hooks 132, 145, 158, 161, 192&ndash;194 and 195 can be called this way; for 161, C gives the page to read into. The paging and interrupt state are as they were. Interrupts stay on except while a piece of data is copied, so an IM2 handler kept in the page after the DOS page keeps running. <code>Docs/Hooks.md</code> has the details.</p>
 <p><b>Seeking</b> reads only the sector the new position is in. On FAT it follows the cluster chain without reading the data. A SAM file whose sectors are in one run (as SAVE makes them when there is room) goes straight to the right sector. Other SAM files are read through, because each sector holds the link to the next.</p>
 <p>The ADOS source includes <code>Docs/Hooks.md</code>, with full details and a worked example.</p>
