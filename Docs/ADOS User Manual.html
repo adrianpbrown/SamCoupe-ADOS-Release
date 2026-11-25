@@ -36,7 +36,7 @@
 <body>
 
 <h1>ADOS User Manual</h1>
-<div class="byline">Version 1.1 &middot; 22 November 2026 &middot; Adrian Brown</div>
+<div class="byline">Version 1.2 &middot; 25 November 2026 &middot; Adrian Brown</div>
 
 <h2>1. Introduction</h2>
 <p>ADOS is one DOS for the SAM Coup&eacute;. It replaces SAMDOS, BDOS (Trinity) and AL-BDOS (Atom Lite), reads and writes MasterDOS disks, and adds PC FAT16 and FAT32 cards and drives. You load it once and every drive you own is available under its own letter.</p>
@@ -68,11 +68,12 @@
 <h3>What's new</h3>
 <table>
   <tr><th>Version</th><th>Changes</th></tr>
+  <tr><td>1.2</td><td>Atom Lite cards formatted by AL-BDOS 2.x are found as BDOS cards. AL-BDOS 2.x puts a PC FAT16 boot sector on sector 0 of the card, so ADOS 1.1 took the card for a FAT drive.</td></tr>
   <tr><td>1.1</td><td>First release. For machine code, as well as everything above: streams (hooks 158, 159, 161 and 192&ndash;194) and a direct entry (<code>CALL &amp;8209</code>) for programs that have taken the machine over. BDOS programs work as under BDOS: the DVARs are laid out as in BDOS (their address is at offset 0 of the DOS page), <code>D2:</code> is the BDOS card, and BDOS&rsquo;s record and sector hooks (134, 149, 156, 157, 160, 162 and 163) are there. With more than one BDOS card, drive 2 is the one used last. Hook 139 (<code>DVAR</code>) gives the DVARs: the version is in DVAR 7, DVAR 0 sets the border flash on disk access, and DVAR 48 gives hook errors back to the program. Hook 195 gives a long name (up to 255 characters, with a drive and path) for the next hook that reads a header, so machine code can load, save, open, list and erase files with long names too, through <code>RST 8</code> or the direct entry (Appendix A).</td></tr>
 </table>
 
 <h3>About this manual</h3>
-<p>This manual describes ADOS version 1.1 as it stands on 22 November 2026. Features still to come are collected in Appendix C. Section 5 is the reference for every command; the other sections explain how to use them.</p>
+<p>This manual describes ADOS version 1.2 as it stands on 25 November 2026. Features still to come are collected in Appendix C. Section 5 is the reference for every command; the other sections explain how to use them.</p>
 <p>You should already know SAM BASIC. Where ADOS works the same as SAMDOS (for example <code>SAVE</code> and <code>LOAD</code>), this manual describes only what is different.</p>
 
 <h2 class="page">2. Getting started</h2>
@@ -80,7 +81,7 @@
 
 <h3>The start-up screen</h3>
 <p>While it starts, ADOS looks for every clock and storage interface it knows about. The screen then shows something like this:</p>
-<pre class="screen">     -= A-DOS Version 1.1 (c) 2026 by Adrian Brown =-
+<pre class="screen">     -= A-DOS Version 1.2 (c) 2026 by Adrian Brown =-
 
 Internal Memory: <span class="r">512K</span>
 External Memory: <span class="r">None Present</span>
@@ -465,7 +466,7 @@ RECORD "UTILITIES"</pre>
 <p><b>Long names.</b> A header has room for a 14-character name. Hook 195 gives a longer one, up to 255 characters, with a drive, a path and a FAT long name allowed as in <code>LOAD</code>. The next hook that reads a header (129&ndash;132, 158, 165 or 166) uses it in place of the header's name, once. The arguments are those of hook 145: A = the page, DE = the address as if that page were in section C. With BASIC's paging, a name at 16384&ndash;32767 is page 0 at the address + &amp;4000, one at 32768&ndash;49151 page 1 at the same address, and one at 49152&ndash;65535 page 2 at the address &minus; &amp;4000. Call 195 just before that hook: anything else that reads a name in between, or any BASIC error, cancels it. It also works through the direct entry.</p>
 <p><b>BDOS hooks.</b> Drive 1 is A:, drive 2 is the BDOS card in use (B: if there is none), and a letter such as "C" can be given instead. The sector hooks work on any SAM drive: a floppy, the current BDOS record, or a disk image. For 160 and 149 the address is read as BASIC&rsquo;s memory is paged (16384&ndash;65535, pages 0&ndash;2). A track and sector that isn&rsquo;t on the disk gives <code>Disk error</code>. <code>Docs/Hooks.md</code> lists the BDOS DVARs and the details.</p>
 <p>158, 159 and 161 have the same numbers and arguments as in MasterDOS and BDOS. A stream reads one file a piece at a time, from any position, on any drive, including inside a disk image. Positions count data bytes only, so position 0 is the first byte of the data on every drive. Streams are read only. A stream hook with no file open gives <code>File not open</code>, except 194 (close).</p>
-<p><b>Is ADOS loaded?</b> Codes 192 and up are ADOS's own, and MasterDOS crashes on unknown codes above 174, so check first. DOSFLG (&amp;5BC2) is 0 if no DOS is loaded. Otherwise read DVAR 7 through hook 139, which every DOS has (from BASIC, <code>PEEK DVAR 7</code>): ADOS holds version &times; 10 + 50 there, 61 for ADOS 1.1. To be certain it is ADOS and not another DOS using the same number, also check for the letters <code>ADOS</code> at offset &amp;0212 of the DOS page, followed by the version (major, minor). <code>Docs/Hooks.md</code> has the code for both.</p>
+<p><b>Is ADOS loaded?</b> Codes 192 and up are ADOS's own, and MasterDOS crashes on unknown codes above 174, so check first. DOSFLG (&amp;5BC2) is 0 if no DOS is loaded. Otherwise read DVAR 7 through hook 139, which every DOS has (from BASIC, <code>PEEK DVAR 7</code>): ADOS holds version &times; 10 + 50 there, 62 for ADOS 1.2. To be certain it is ADOS and not another DOS using the same number, also check for the letters <code>ADOS</code> at offset &amp;0212 of the DOS page, followed by the version (major, minor). <code>Docs/Hooks.md</code> has the code for both.</p>
 <p><b>Direct entry (from 1.1).</b> A program that has taken the machine over (ROM 0 paged out, the system variables reused, its own interrupts) can't use <code>RST 8</code>. Instead it pages the DOS page into section C and calls offset &amp;0209 in it, with the hook code in the byte after the call: <code>CALL &amp;8209</code> / <code>DB 161</code>. The arguments and results are the hook's, in the main registers. An error comes back to the program with carry set and A = the error number. Hooks 132, 145, 158, 161, 192&ndash;194 and 195 can be called this way; for 161, C gives the page to read into. The paging and interrupt state are as they were. Interrupts stay on except while a piece of data is copied, so an IM2 handler kept in the page after the DOS page keeps running. <code>Docs/Hooks.md</code> has the details.</p>
 <p><b>Seeking</b> reads only the sector the new position is in. On FAT it follows the cluster chain without reading the data. A SAM file whose sectors are in one run (as SAVE makes them when there is room) goes straight to the right sector. Other SAM files are read through, because each sector holds the link to the next.</p>
 <p>The ADOS source includes <code>Docs/Hooks.md</code>, with full details and a worked example.</p>

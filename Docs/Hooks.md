@@ -44,7 +44,7 @@ Codes 128 to 174 are shared with SAMDOS and MasterDOS. Codes 192 and up are ADOS
 
 The system variable DOSFLG (&5BC2) is 0 if no DOS is loaded. If one is, ask it for DVAR 7, the DOS version, with hook 139. Every DOS has hook 139: it is what BASIC's `DVAR` uses, and SAMDOS, MasterDOS, BDOS and ADOS all give the address of DVAR n. Don't read DVAR 7 from a fixed place in the DOS page, because not every DOS keeps its DVARs in the same place.
 
-ADOS writes DVAR 7 as version × 10 + 50, so 60 is ADOS 1.0 and 61 is ADOS 1.1. That keeps it clear of SAMDOS (20), MasterDOS (42 = 2.2, 43 = 2.3), BDOS (5) and Betasoft's MasterBASIC, which changes DVAR 7 to 50 when combined with MasterDOS and 21 when combined with SAMDOS. From BASIC:
+ADOS writes DVAR 7 as version × 10 + 50, so 60 is ADOS 1.0, 61 is ADOS 1.1 and 62 is ADOS 1.2. That keeps it clear of SAMDOS (20), MasterDOS (42 = 2.2, 43 = 2.3), BDOS (5) and Betasoft's MasterBASIC, which changes DVAR 7 to 50 when combined with MasterDOS and 21 when combined with SAMDOS. From BASIC:
 
 ```
 IF PEEK DVAR 7 >= 61 THEN ...

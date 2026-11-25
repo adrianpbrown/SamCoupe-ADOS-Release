@@ -336,7 +336,7 @@ ADOS keeps its settings in DOS variables, read with `PEEK DVAR n` and changed wi
 |------|---------|---------|
 | 0 | Border flash while sectors are read or written. The colour is (DVAR 0 AND 7) AND the sector number. 0 turns the flash off | 7 |
 | 1-45 | Laid out as in BDOS, for BDOS programs: DVAR 25 is the BDOS card's current record (see [BDOS programs](#bdos-programs)). The full list is in [Hook Codes](Hooks.md#bdos-compatibility) | |
-| 7 | The version × 10 + 50 (61 is ADOS 1.1). Don't change it | 61 |
+| 7 | The version × 10 + 50 (62 is ADOS 1.2). Don't change it | 62 |
 | 46 | Drive timeout, about 1.5 seconds per unit. A floppy drive with no disk gives "No disk" after it | 3 |
 | 47 | The drive selected at boot. If there is no such drive, the first letter that has a drive is used | "A" |
 | 48 | For machine code programs only: not 0 gives hook errors back to the program instead of reporting them. See [Hook Codes](Hooks.md#getting-errors-back-instead-of-a-basic-error) | 0 |
