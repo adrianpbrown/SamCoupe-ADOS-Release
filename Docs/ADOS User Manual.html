@@ -461,7 +461,8 @@ RECORD "UTILITIES"</pre>
 </ul>
 
 <h3>Running it</h3>
-<pre>CLEAR 32767: LOAD "BDOS2FAT" CODE: CALL 32768</pre>
+<p>BDOS2FAT is on the ADOS disk. Load it from BASIC, and it starts as soon as it has loaded:</p>
+<pre>CLEAR 32767: LOAD "BDOS2FAT" CODE</pre>
 <p>It changes to screen mode 3 and lists the BDOS drives it finds. Press a drive's number, or <code>N</code> to stop. It looks at the drive, only reading, then shows its size, the records in use, how many must move, and the FAT32 cluster size, with the choices for the names. Press <code>1</code> or <code>2</code> for the names, <code>M</code> or <code>D</code> for the extension, then <code>Y</code> to convert the drive (and <code>Y</code> again when asked if you are sure), or <code>N</code> to leave it unchanged.</p>
 <figure><img src="images/bdos2fat-drives.png" alt="The BDOS drives found (here an Atom Lite master and slave)"><figcaption>The BDOS drives found (here an Atom Lite master and slave)</figcaption></figure>
 <figure><img src="images/bdos2fat-options.png" alt="The drive, what will happen, and the choices for the names"><figcaption>The drive, what will happen, and the choices for the names</figcaption></figure>
@@ -499,8 +500,8 @@ RECORD "UTILITIES"</pre>
   <tr><td>AL-BDOS (or a renamed one)</td><td>Works if one of its records has never been formatted. Formatting that record in BDOS would remove ADOS. If every record is formatted it is refused</td></tr>
   <tr><td>Plain BDOS, with no boot sector</td><td>Refused: the ROM can't boot it</td></tr>
 </table>
-<p>MAKEBOOT is on the ADOS disk. Load and run it from BASIC:</p>
-<pre>CLEAR 32767: LOAD "MAKEBOOT" CODE: CALL 32768</pre>
+<p>MAKEBOOT is on the ADOS disk. Load it from BASIC, and it starts as soon as it has loaded:</p>
+<pre>CLEAR 32767: LOAD "MAKEBOOT" CODE</pre>
 <p>It lists the Atom Lite drives that have a card. Press a drive's number, or N to stop. It reads the card (only reading), shows where ADOS will go, and asks. Press Y to write it, or N to leave the card unchanged. It writes ADOS first and checks it, then writes sector 0 last, so a card is never left with a boot sector that has nothing to load. Run MAKEBOOT again to update ADOS on the card.</p>
 <h3>Booting from the card</h3>
 <p>Fit the AL BOOT ROM and switch on or reset. The card's boot sector loads ADOS and starts it, then the SAM goes to BASIC, so DIR, LOAD and the rest work. At this point in the ROM's start up the screen can't be set up, so ADOS shows no start-up screen as it does from a floppy.</p>

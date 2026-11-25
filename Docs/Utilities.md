@@ -42,10 +42,10 @@ The drive must be at least **33MB**, the smallest a FAT32 drive can be.
 
 ### Running it
 
-BDOS2FAT is on the ADOS disk. Load and run it from BASIC:
+BDOS2FAT is on the ADOS disk. Load it from BASIC, and it starts as soon as it has loaded:
 
 ```text
-CLEAR 32767: LOAD "BDOS2FAT" CODE: CALL 32768
+CLEAR 32767: LOAD "BDOS2FAT" CODE
 ```
 
 It changes to screen mode 3 and lists the BDOS drives it finds. Press a drive's number, or **N** to stop. It looks at the drive (only reading) and shows:
@@ -117,10 +117,10 @@ It writes the ADOS sectors first and checks them, then writes sector 0 last. A c
 
 ### Running it
 
-MAKEBOOT is on the ADOS disk. Load and run it from BASIC:
+MAKEBOOT is on the ADOS disk. Load it from BASIC, and it starts as soon as it has loaded:
 
 ```text
-CLEAR 32767: LOAD "MAKEBOOT" CODE: CALL 32768
+CLEAR 32767: LOAD "MAKEBOOT" CODE
 ```
 
 It lists the Atom Lite drives that have a card. Press a drive's number, or **N** to stop. It reads the card (only reading), shows which sectors ADOS will go in, and asks. Press **Y** to write it, or **N** to leave the card unchanged. If sector 0 already has boot code, it says so: writing replaces it.
