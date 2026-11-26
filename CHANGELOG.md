@@ -2,6 +2,15 @@
 
 All notable changes to ADOS for the SAM Coupé.
 
+## 1.3b (26 November 2026)
+
+A new `ADOS-1.3.mgt` disk and `ADOS-1.3.bin`. `DVAR 7` is still 63. If you use a floppy drive or a Gotek, download it again.
+
+### Fixed
+
+- **Floppy disks and Goteks no longer fail with `85 Disk error`.** On a real SAM, `DIR`, `LOAD` and booting ADOS from floppy could stall for many seconds, retrying the same sector (the border stays on one colour), and then stop with error 85. ADOS was too slow taking each byte from the disk controller, so the controller reported lost data. The sector transfer is now as quick as MasterDOS's. SimCoupe doesn't time this, so the fault only showed on real hardware.
+- **Booting from floppy recovers from a bad read sooner.** After resetting the head, the boot loader now waits for it to finish before seeking again.
+
 ## 1.3a (25 November 2026)
 
 A new `ADOS-1.3.mgt` disk. ADOS itself is the same as in 1.3 (`DVAR 7` is still 63, and `ADOS-1.3.bin` is unchanged). If you downloaded the 1.3 disk, download it again.
