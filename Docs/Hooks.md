@@ -258,7 +258,8 @@ Hook 156 selects a record on the BDOS drive, by number (A = 0, HL = the number) 
 | 163 | Write sectors | As 162 |
 | 134 | Verify sectors: compare them with memory | As 162. "Verify failed" (93) if they differ |
 
-- **The drive** is 1 (A:), 2 (the BDOS drive, or B:) or, in ADOS, a drive letter such as "C". It must be a SAM disk: a floppy, a BDOS record (the current one), or a disk image that a FAT drive is in. Otherwise the hook gives "Bad device" (91).
+- **The drive** is 1 (A:), 2 (the BDOS drive, or B:) or, in ADOS, 0 for the current drive or a drive letter such as "C". It must be a SAM disk: a floppy, a BDOS record (the current one), or a disk image that a FAT drive is in. Otherwise the hook gives "Bad device" (91).
+- **Use 0 in a loader** that reads its own disk a sector at a time. It then works wherever it was loaded from: a floppy, a BDOS record, or a disk image after `DIR = "D:\GAMES\GAME.MGT"`. A loader that asks for drive 1 always reads floppy A:, so it can't find its files when it is run from an image. 0 is an ADOS addition, so a loader that must also run under another DOS should use 1 there.
 - **The address** for 160 and 149 is read as BASIC's memory is paged, as in BDOS and MasterDOS: 16384-32767 is page 0, 32768-49151 page 1 and 49152-65535 page 2. Below 16384 gives error 30, "Integer out of range". For 162, 163 and 134 the page is given in C.
 - **Each sector** goes 512 bytes on from the one before, on into the following pages. The track and sector go on through sector 10 and then the next track. Track 79 is followed by track 0 of side 2 (128).
 - **The track and sector** must be on the disk: tracks 0-79 on either side (128-207 for side 2) and sectors 1-10. Otherwise, or if the sectors run off the end of the disk, the hook gives "Disk error" (85). Asking for no sectors (IX = 0) gives error 30.
